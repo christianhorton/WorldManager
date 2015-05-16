@@ -1,5 +1,8 @@
 package org.worldmanager.core.listeners;
 
+import java.io.File;
+import java.util.UUID;
+
 import org.bukkit.GameMode;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -9,7 +12,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.inventory.Inventory;
 import org.worldmanager.core.CorePlugin;
 
 public class PlayerListener implements Listener {
@@ -19,7 +24,7 @@ public class PlayerListener implements Listener {
 	public PlayerListener(final CorePlugin corePlugin) {
 		this.plugin = corePlugin;
 	}
-	
+
 	@EventHandler
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		Player interactPlayer = event.getPlayer();
@@ -30,23 +35,36 @@ public class PlayerListener implements Listener {
 			}
 		}			
 	}
-	
+
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		String worldName = event.getPlayer().getWorld().getName();
-		checkWorld(event.getPlayer(), worldName);
+		if(!event.getPlayer().isOp()) {
+			plugin.checkWorld(event.getPlayer(), worldName);
+		}
+		
+		File playerWorldInventory = new File(plugin.getDataFolder() + "/" + worldName + "/" + event.getPlayer().getUniqueId().toString());
+		if(playerWorldInventory.exists()) {
+			plugin.loadInvetory(event.getPlayer());
+		}
 	}
-	
+
+	@EventHandler
+	public void onPlayerQuit(PlayerQuitEvent event) {
+		Player player = event.getPlayer();
+		World world = event.getPlayer().getWorld();
+		Inventory inventory = player.getInventory();
+
+	}
+
 	@EventHandler
 	public void onPlayerTeleport(PlayerTeleportEvent event) {
 		String worldName = event.getTo().getWorld().getName();
-		checkWorld(event.getPlayer(), worldName);
+		if(!event.getPlayer().isOp()) {
+			plugin.checkWorld(event.getPlayer(), worldName);
+		}
 	}
-	
-	public void checkWorld(Player player, String worldName) {
-		if(plugin.isSurvival(worldName)) { player.setGameMode(GameMode.SURVIVAL); }
-		if(plugin.isCreative(worldName)) { player.setGameMode(GameMode.CREATIVE); }	
-	}
+
 
 }
 
