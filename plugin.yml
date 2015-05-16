@@ -1,0 +1,3 @@
+name: WorldManager
+main: org.worldmanager.core.CorePlugin
+version: 1.0

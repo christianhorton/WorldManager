@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.logging.Level;
 
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
@@ -52,11 +53,15 @@ public class CorePlugin extends JavaPlugin  {
 	private void initConfigs() {
 		configFile = new File(getDataFolder(), "config.yml");
 		worldFile = new File(getDataFolder(), "worlds.yml");
-
 		try {
 			if(!configFile.exists()) {
 				configFile.createNewFile();
 				getLogger().log(Level.INFO, "Created config.yml");
+			} else {
+				this.configConfig.load(configFile);
+				getLogger().log(Level.INFO, "Loaded config.yml");
+				this.worldConfig.load(worldFile);
+				getLogger().log(Level.INFO, "Loaded worlds.yml");
 			}
 			if(!worldFile.exists()) { 
 				worldFile.createNewFile();
@@ -65,8 +70,11 @@ public class CorePlugin extends JavaPlugin  {
 		} catch (IOException e) {
 			getLogger().log(Level.WARNING, "Could not create configuration files.");
 			e.printStackTrace();
+		} catch (InvalidConfigurationException e) {
+			getLogger().log(Level.WARNING, "Could not load configuration files.");
+			e.printStackTrace();
 		} 
-
+		
 
 	}
 }
