@@ -28,7 +28,7 @@ public class CorePlugin extends JavaPlugin  {
 	/* Configurations */
 	private FileConfiguration configConfig;
 	private FileConfiguration worldConfig;
-	
+
 	/* Lists */
 	public List<String> worldsCreative = new ArrayList<String>();
 	public List<String> worldsSurvival = new ArrayList<String>();
@@ -41,13 +41,13 @@ public class CorePlugin extends JavaPlugin  {
 		initConfigs();
 		loadConfigValues();
 		getLogger().log(Level.INFO, "Enabled");
-	
+
 		if(isSurvival("creative")) {
 			getLogger().log(Level.INFO, "This world is survival");
 		} else {
 			getLogger().log(Level.INFO, "This world is not survival");
 		}
-		
+
 	}
 
 	public void onDisable() {
@@ -69,7 +69,7 @@ public class CorePlugin extends JavaPlugin  {
 		configFile = new File(getDataFolder(), "config.yml");
 		worldFile = new File(getDataFolder(), "worlds.yml");
 		configConfig = new YamlConfiguration();
-        worldConfig = new YamlConfiguration();
+		worldConfig = new YamlConfiguration();
 		try {
 			this.configConfig.load(configFile);
 			getLogger().log(Level.INFO, "Loaded config.yml");
@@ -86,9 +86,26 @@ public class CorePlugin extends JavaPlugin  {
 		this.worldsCreative = worldConfig.getStringList("creative");
 		this.worldsSurvival = worldConfig.getStringList("survival");
 	}
-	
+
+	/**
+	 * Checks if the world is a Survival gamemode world.
+	 * @param worldName
+	 * @return
+	 */
 	public boolean isSurvival(String worldName) {
 		if(worldsSurvival.contains(worldName)) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Checks if the world is a Creative gamemode world.
+	 * @param worldName
+	 * @return
+	 */
+	public boolean isCreative(String worldName) {
+		if(worldsCreative.contains(worldName)) {
 			return true;
 		}
 		return false;
