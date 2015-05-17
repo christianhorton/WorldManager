@@ -38,6 +38,7 @@ public class CorePlugin extends JavaPlugin  {
 	/* Lists */
 	public List<String> worldsCreative;
 	public List<String> worldsSurvival;
+	public List<String> worldsAdventure;
 	private ArrayList<Listener> currentListeners;
 	
 	
@@ -48,6 +49,7 @@ public class CorePlugin extends JavaPlugin  {
 		currentListeners = new ArrayList<Listener>();
 		worldsCreative = new ArrayList<String>();
 		worldsSurvival = new ArrayList<String>();
+		worldsAdventure = new ArrayList<String>();
 		currentListeners.add(new PlayerListener(this));
 		currentListeners.add(new BlockListener(this));
 		initListeners();
@@ -122,6 +124,7 @@ public class CorePlugin extends JavaPlugin  {
 	private void loadConfigValues() {
 		this.worldsCreative = worldConfig.getStringList("creative");
 		this.worldsSurvival = worldConfig.getStringList("survival");
+		this.worldsSurvival = worldConfig.getStringList("adventure");
 		this.noBreakWorld = worldConfig.getString("noBreakWorld");
 	
 	}
@@ -150,6 +153,18 @@ public class CorePlugin extends JavaPlugin  {
 		return false;
 	}
 	
+	/**
+	 * Checks if the world is a Adventure gamemode world.
+	 * @param worldName
+	 * @return Boolean
+	 */
+	public boolean isAdventure(String worldName) {
+		if(worldsAdventure.contains(worldName)) {
+			return true;
+		}
+		return false;
+	}
+	
 
 	/**
 	 * Check the world for the gamemode it should use
@@ -158,13 +173,17 @@ public class CorePlugin extends JavaPlugin  {
 	 */
 	public void checkWorld(Player player, String worldName) {
 		if(isSurvival(worldName)) { player.setGameMode(GameMode.SURVIVAL); }
-		if(isCreative(worldName)) { player.setGameMode(GameMode.CREATIVE); }	
+		if(isCreative(worldName)) { player.setGameMode(GameMode.CREATIVE); }
+		if(isAdventure(worldName)) { player.setGameMode(GameMode.ADVENTURE); }	
 	}
 	
 	public void saveInventory(Player player, String worldName) {
 		FileConfiguration playerInventory = new YamlConfiguration();
 		try {
 			playerInventory.load(getPlayerInventorySave(player, worldName));
+			// Reset the config
+			playerInventory = resetConfig((YamlConfiguration) playerInventory);
+			
 			ItemStack[] playerInventoryStack = player.getInventory().getContents();
 			ItemStack[] playerArmorStack = player.getInventory().getArmorContents();
 			for(int x = 0; x < playerInventoryStack.length; x++) {
@@ -177,7 +196,6 @@ public class CorePlugin extends JavaPlugin  {
 				playerInventory.set("armor."+x, armorItem);
 			}
 			playerInventory.save(getPlayerInventorySave(player, worldName));
-			
 		} catch (FileNotFoundException e) { e.printStackTrace();
 		} catch (IOException e) { e.printStackTrace();
 		} catch (InvalidConfigurationException e) { e.printStackTrace(); }
@@ -200,5 +218,14 @@ public class CorePlugin extends JavaPlugin  {
 	
 	public File getPlayerInventorySave(Player player, String worldName) {
 		return new File(getDataFolder() + "/" + worldName + "/" + player.getUniqueId().toString() +".yml");
+	}
+	
+	public YamlConfiguration resetConfig(YamlConfiguration config) {
+		YamlConfiguration returnConfig = config;
+		for(String key : returnConfig.getKeys(false)) {
+			returnConfig.set(key, null);
+		}
+		return returnConfig;
+		
 	}
 }
