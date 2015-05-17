@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -17,6 +18,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -34,12 +36,18 @@ public class CorePlugin extends JavaPlugin  {
 	private FileConfiguration worldConfig;
 
 	/* Lists */
-	public List<String> worldsCreative = new ArrayList<String>();
-	public List<String> worldsSurvival = new ArrayList<String>();
+	public List<String> worldsCreative;
+	public List<String> worldsSurvival;
 	private ArrayList<Listener> currentListeners;
-
+	
+	
+	/* String */
+	public String noBreakWorld; 
+	
 	public void onEnable() {
 		currentListeners = new ArrayList<Listener>();
+		worldsCreative = new ArrayList<String>();
+		worldsSurvival = new ArrayList<String>();
 		currentListeners.add(new PlayerListener(this));
 		currentListeners.add(new BlockListener(this));
 		initListeners();
@@ -114,6 +122,8 @@ public class CorePlugin extends JavaPlugin  {
 	private void loadConfigValues() {
 		this.worldsCreative = worldConfig.getStringList("creative");
 		this.worldsSurvival = worldConfig.getStringList("survival");
+		this.noBreakWorld = worldConfig.getString("noBreakWorld");
+	
 	}
 
 	/**
@@ -150,8 +160,45 @@ public class CorePlugin extends JavaPlugin  {
 		if(isSurvival(worldName)) { player.setGameMode(GameMode.SURVIVAL); }
 		if(isCreative(worldName)) { player.setGameMode(GameMode.CREATIVE); }	
 	}
+	
+	public void saveInventory(Player player, String worldName) {
+		FileConfiguration playerInventory = new YamlConfiguration();
+		try {
+			playerInventory.load(getPlayerInventorySave(player, worldName));
+			ItemStack[] playerInventoryStack = player.getInventory().getContents();
+			ItemStack[] playerArmorStack = player.getInventory().getArmorContents();
+			for(int x = 0; x < playerInventoryStack.length; x++) {
+				ItemStack inventoryItem = playerInventoryStack[x];
+				playerInventory.set("inventory."+x, inventoryItem);
+			}			
+			
+			for(int x = 0; x < playerArmorStack.length; x++) {
+				ItemStack armorItem = playerArmorStack[x];
+				playerInventory.set("armor."+x, armorItem);
+			}
+			playerInventory.save(getPlayerInventorySave(player, worldName));
+			
+		} catch (FileNotFoundException e) { e.printStackTrace();
+		} catch (IOException e) { e.printStackTrace();
+		} catch (InvalidConfigurationException e) { e.printStackTrace(); }
+	}
 
-	public void loadInvetory(Player player) {
-		PlayerInventory inventory = player.getInventory();
+	public void loadInvetory(Player player, String worldName) {
+		FileConfiguration playerInventory = new YamlConfiguration();
+		try {
+			playerInventory.load(getPlayerInventorySave(player, worldName));
+			for(int x = 0; x < 36; x++) {
+				if(playerInventory.contains("inventory." + x)) {
+					ItemStack itemStack = playerInventory.getItemStack("inventory." + x);
+					player.getInventory().addItem(itemStack);
+				}
+			}
+		} catch (FileNotFoundException e) { e.printStackTrace();
+		} catch (IOException e) { e.printStackTrace();
+		} catch (InvalidConfigurationException e) { e.printStackTrace(); }
+	}
+	
+	public File getPlayerInventorySave(Player player, String worldName) {
+		return new File(getDataFolder() + "/" + worldName + "/" + player.getUniqueId().toString() +".yml");
 	}
 }

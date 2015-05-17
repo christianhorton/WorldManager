@@ -1,7 +1,9 @@
 package org.worldmanager.core.listeners;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.UUID;
+import java.util.logging.Level;
 
 import org.bukkit.GameMode;
 import org.bukkit.World;
@@ -29,11 +31,12 @@ public class PlayerListener implements Listener {
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		Player interactPlayer = event.getPlayer();
 		World worldIn = interactPlayer.getWorld();
-		if(event.getAction() == Action.LEFT_CLICK_BLOCK) {
-			if(worldIn.getName() == "world" && !interactPlayer.isOp()) {
+		if(worldIn.getName() == plugin.noBreakWorld)
+//		if(event.getAction() == Action.LEFT_CLICK_BLOCK) {
+			if(!interactPlayer.isOp()) {
 				event.setCancelled(true);
 			}
-		}			
+//		}			
 	}
 
 	@EventHandler
@@ -42,10 +45,9 @@ public class PlayerListener implements Listener {
 		if(!event.getPlayer().isOp()) {
 			plugin.checkWorld(event.getPlayer(), worldName);
 		}
-		
-		File playerWorldInventory = new File(plugin.getDataFolder() + "/" + worldName + "/" + event.getPlayer().getUniqueId().toString());
-		if(playerWorldInventory.exists()) {
-			plugin.loadInvetory(event.getPlayer());
+
+		if(playerHasInventory(worldName, event.getPlayer())) {
+
 		}
 	}
 
@@ -53,18 +55,41 @@ public class PlayerListener implements Listener {
 	public void onPlayerQuit(PlayerQuitEvent event) {
 		Player player = event.getPlayer();
 		World world = event.getPlayer().getWorld();
-		Inventory inventory = player.getInventory();
-
+		plugin.saveInventory(player, world.getName());
 	}
 
 	@EventHandler
 	public void onPlayerTeleport(PlayerTeleportEvent event) {
-		String worldName = event.getTo().getWorld().getName();
-		if(!event.getPlayer().isOp()) {
-			plugin.checkWorld(event.getPlayer(), worldName);
+		String worldNameTo = event.getTo().getWorld().getName();
+		String worldNameFrom = event.getFrom().getWorld().getName();
+		
+		if(!plugin.getPlayerInventorySave(event.getPlayer(), worldNameTo).exists()) {
+			try {
+				plugin.getPlayerInventorySave(event.getPlayer(), worldNameTo).createNewFile();
+			} catch (IOException e) { e.printStackTrace(); }
 		}
+		
+		if(!plugin.getPlayerInventorySave(event.getPlayer(), worldNameFrom).exists()) {
+			try {
+				plugin.getPlayerInventorySave(event.getPlayer(), worldNameFrom).createNewFile();
+			} catch (IOException e) { e.printStackTrace(); }
+		}
+		this.plugin.saveInventory(event.getPlayer(), worldNameFrom);
+		this.plugin.loadInvetory(event.getPlayer(), worldNameTo);
 	}
 
+
+	private boolean playerHasInventory(String worldName, Player player) {
+		File playerWorldInventory = new File(plugin.getDataFolder() + "/" + worldName + "/" + player.getUniqueId().toString() +".yml");
+		try {
+			playerWorldInventory.createNewFile();
+			plugin.getLogger().log(Level.INFO,  "Created player: " + playerWorldInventory.getPath());
+			return true;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
 
 }
 
